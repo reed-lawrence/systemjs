@@ -8,8 +8,8 @@ var envGlobal = hasSelf ? self : global;
 export { envGlobal as global };
 
 // Loader-scoped baseUrl and import map supported in Node.js only
-export var BASE_URL = hasSymbol ? Symbol() : '_';
-export var IMPORT_MAP = hasSymbol ? Symbol() : '#';
+export const BASE_URL = Symbol('base-url');
+export const IMPORT_MAP = Symbol('import-map');
 
 export var baseUrl;
 
@@ -33,7 +33,7 @@ if (!process.env.SYSTEM_BROWSER && !baseUrl && typeof process !== 'undefined') {
 }
 
 var backslashRegEx = /\\/g;
-export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
+export function resolveIfNotPlainOrUrl(relUrl, parentUrl) {
   if (relUrl.indexOf('\\') !== -1)
     relUrl = relUrl.replace(backslashRegEx, '/');
   // protocol-relative
@@ -42,8 +42,8 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
   }
   // relative-url
   else if (relUrl[0] === '.' && (relUrl[1] === '/' || relUrl[1] === '.' && (relUrl[2] === '/' || relUrl.length === 2 && (relUrl += '/')) ||
-      relUrl.length === 1  && (relUrl += '/')) ||
-      relUrl[0] === '/') {
+    relUrl.length === 1 && (relUrl += '/')) ||
+    relUrl[0] === '/') {
     var parentProtocol = parentUrl.slice(0, parentUrl.indexOf(':') + 1);
     // Disabled, but these cases will give inconsistent results for deep backtracking
     //if (parentUrl[parentProtocol.length] !== '/')
@@ -121,11 +121,11 @@ export function resolveIfNotPlainOrUrl (relUrl, parentUrl) {
  *
  */
 
-export function resolveUrl (relUrl, parentUrl) {
+export function resolveUrl(relUrl, parentUrl) {
   return resolveIfNotPlainOrUrl(relUrl, parentUrl) || (relUrl.indexOf(':') !== -1 ? relUrl : resolveIfNotPlainOrUrl('./' + relUrl, parentUrl));
 }
 
-function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, parentUrl) {
+function resolveAndComposePackages(packages, outPackages, baseUrl, parentMap, parentUrl) {
   for (var p in packages) {
     var resolvedLhs = resolveIfNotPlainOrUrl(p, baseUrl) || p;
     var rhs = packages[p];
@@ -144,7 +144,7 @@ function resolveAndComposePackages (packages, outPackages, baseUrl, parentMap, p
   }
 }
 
-export function resolveAndComposeImportMap (json, baseUrl, outMap) {
+export function resolveAndComposeImportMap(json, baseUrl, outMap) {
   if (json.imports)
     resolveAndComposePackages(json.imports, outMap.imports, baseUrl, outMap, null);
 
@@ -156,12 +156,12 @@ export function resolveAndComposeImportMap (json, baseUrl, outMap) {
 
   for (u in json.depcache || {})
     outMap.depcache[resolveUrl(u, baseUrl)] = json.depcache[u];
-  
+
   for (u in json.integrity || {})
     outMap.integrity[resolveUrl(u, baseUrl)] = json.integrity[u];
 }
 
-function getMatch (path, matchObj) {
+function getMatch(path, matchObj) {
   if (matchObj[path])
     return path;
   var sepIndex = path.length;
@@ -172,7 +172,7 @@ function getMatch (path, matchObj) {
   } while ((sepIndex = path.lastIndexOf('/', sepIndex - 1)) !== -1)
 }
 
-function applyPackages (id, packages) {
+function applyPackages(id, packages) {
   var pkgName = getMatch(id, packages);
   if (pkgName) {
     var pkg = packages[pkgName];
@@ -188,11 +188,11 @@ function applyPackages (id, packages) {
   }
 }
 
-function targetWarning (code, match, target, msg) {
+function targetWarning(code, match, target, msg) {
   console.warn(errMsg(code, process.env.SYSTEM_PRODUCTION ? [target, match].join(', ') : "Package target " + msg + ", resolving target '" + target + "' for " + match));
 }
 
-export function resolveImportMap (importMap, resolvedOrPlain, parentUrl) {
+export function resolveImportMap(importMap, resolvedOrPlain, parentUrl) {
   var scopes = importMap.scopes;
   var scopeUrl = parentUrl && getMatch(parentUrl, scopes);
   while (scopeUrl) {
